@@ -18,6 +18,9 @@ class AutoPersonnelViewModel : ViewModel() {
     private val _isLoading = MutableStateFlow(true)
     val isLoading: StateFlow<Boolean> get() = _isLoading
 
+    private val _actionError = MutableStateFlow<String?>(null)
+    val actionError: StateFlow<String?> get() = _actionError
+
     fun getAutoPersonnel() {
         viewModelScope.launch {
             _isLoading.value = true
@@ -62,11 +65,19 @@ class AutoPersonnelViewModel : ViewModel() {
     fun deletePersonnel(id: Int) {
         viewModelScope.launch {
             try {
-                _autoPersonnel.value = _autoPersonnel.value.filterNot { it.id == id }
                 repository.deletePersonnel(id)
+                _autoPersonnel.value = _autoPersonnel.value.filterNot { it.id == id }
             } catch (e: Exception) {
                 Log.e("AutoPersonnelViewModel", "Error deleting personnel: ${e.message}", e)
+                if (e.message?.contains("409") == true) {
+                    _actionError.value =
+                        "Unable to delete personnel with refs"
+                }
             }
         }
+    }
+
+    fun clearError() {
+        _actionError.value = null
     }
 }

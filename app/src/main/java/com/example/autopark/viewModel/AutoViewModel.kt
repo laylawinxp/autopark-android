@@ -63,8 +63,8 @@ class AutoViewModel : ViewModel() {
     fun deleteAuto(id: Int) {
         viewModelScope.launch {
             try {
-                _autos.value = _autos.value.filterNot { it.id == id }
                 repository.deleteAuto(id)
+                _autos.value = _autos.value.filterNot { it.id == id }
             } catch (e: Exception) {
                 Log.e("AutoViewModel", "Error deleting auto: ${e.message}", e)
             }

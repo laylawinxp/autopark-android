@@ -9,8 +9,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-class TriggerConflictException(message: String) : Exception(message)
-
 class JournalViewModel : ViewModel() {
     private val repository = JournalRepository()
 
@@ -44,17 +42,22 @@ class JournalViewModel : ViewModel() {
                 _journals.value = _journals.value.toMutableList().apply {
                     add(addedJournal)
                 }
-            } catch (e: TriggerConflictException) {
-                Log.e("JournalViewModel", "Error adding journal: ${e.message}", e)
-                _actionError.value = e.message
+                _actionError.value = null
             } catch (e: Exception) {
-                Log.e("JournalViewModel", "Error adding journal: ${e.message}", e)
-                _actionError.value = "Unable to add journal: Invalid data or constraints violation"
+                Log.e(
+                    "JournalViewModel",
+                    "Error adding journal: ${e.message}", e
+                )
+                if (e.message?.contains("409") == true) {
+                    _actionError.value =
+                        "Unable to add journal item: Invalid data"
+                }
             } finally {
                 getJournals()
             }
         }
     }
+
 
     fun updateJournal(id: Int, journalDto: JournalDto) {
         viewModelScope.launch {
@@ -63,22 +66,27 @@ class JournalViewModel : ViewModel() {
                 _journals.value = _journals.value.map {
                     if (it.id == id) journalDto else it
                 }
-            } catch (e: TriggerConflictException) {
-                Log.e("JournalViewModel", "Error updating journal: ${e.message}", e)
-                _actionError.value = e.message
+                _actionError.value = null
             } catch (e: Exception) {
-                Log.e("JournalViewModel", "Error updating journal: ${e.message}", e)
-                _actionError.value =
-                    "Unable to update journal: Invalid data or constraints violation"
+                Log.e(
+                    "JournalViewModel",
+                    "Error updating journal: ${e.message} cause ${e.cause}  local ${e.localizedMessage}",
+                    e
+                )
+                if (e.message?.contains("409") == true) {
+                    _actionError.value =
+                        "Unable to update journal: Arrival time cannot be earlier than departure time"
+                }
             }
         }
     }
 
+
     fun deleteJournal(id: Int) {
         viewModelScope.launch {
             try {
-                _journals.value = _journals.value.filterNot { it.id == id }
                 repository.deleteJournal(id)
+                _journals.value = _journals.value.filterNot { it.id == id }
             } catch (e: Exception) {
                 Log.e("JournalViewModel", "Error deleting journal: ${e.message}", e)
             }

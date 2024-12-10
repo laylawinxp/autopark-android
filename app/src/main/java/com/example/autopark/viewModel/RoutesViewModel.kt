@@ -45,7 +45,7 @@ class RoutesViewModel : ViewModel() {
         }
     }
 
-    fun getCurrentlyInRoute(id: Int) {
+    private fun getCurrentlyInRoute(id: Int) {
         viewModelScope.launch {
             try {
                 val response = repository.getCurrentlyInRoute(id)
@@ -61,7 +61,7 @@ class RoutesViewModel : ViewModel() {
         }
     }
 
-    fun getMinTimeAndBestCar(id: Int) {
+    private fun getMinTimeAndBestCar(id: Int) {
         viewModelScope.launch {
             try {
                 val response = repository.getShortestTime(id)
@@ -113,8 +113,8 @@ class RoutesViewModel : ViewModel() {
     fun deleteRoute(id: Int) {
         viewModelScope.launch {
             try {
-                _routes.value = _routes.value.filterNot { it.id == id }
                 repository.deleteRoute(id)
+                _routes.value = _routes.value.filterNot { it.id == id }
             } catch (e: Exception) {
                 Log.e("RoutesViewModel", "Error deleting route: ${e.message}", e)
             }
